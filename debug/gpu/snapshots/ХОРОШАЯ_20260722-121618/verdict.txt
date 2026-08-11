@@ -1,0 +1,4 @@
+вердикт: ХОРОШАЯ | GPU 28.4 Вт сред, 32.75 макс | 1726 МГц | загрузка 73 %
+батарея: Not charging 95%, 0.0 Вт | профиль: balanced | RTD3: Disabled | зазор: +448 мс | WMI: bitland-mifs-wmi
+ядро: 7.1.3-2-cachyos | boot_id: 00f682df160947628fc2acadd2eec8d8
+cmdline: initrd=\initramfs-linux-cachyos.img root=UUID=c7f63d6d-d09b-4558-82ea-2900970dceb7 rw rootflags=subvol=/@ zswap.enabled=0 nowatchdog quiet splash nvidia.NVreg_DynamicPowerManagement=0

@@ -1,0 +1,4 @@
+вердикт: ПЛОХАЯ | GPU 16.8 Вт сред, 16.93 макс | 1289 МГц | загрузка 95 %
+батарея: Charging 94%, 7.3 Вт | профиль: balanced | RTD3: Disabled | зазор: -0 мс | WMI: bitland-mifs-wmi
+ядро: 7.1.3-2-cachyos | boot_id: 0fe9f5c67c4649fdbbcda595917bce26
+cmdline: initrd=\acpi-override.img initrd=\initramfs-linux-cachyos.img root=UUID=c7f63d6d-d09b-4558-82ea-2900970dceb7 rw rootflags=subvol=/@ zswap.enabled=0 nowatchdog quiet splash nvidia.NVreg_DynamicPowerManagement=0

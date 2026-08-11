@@ -1,0 +1,4 @@
+вердикт: ХОРОШАЯ | GPU 32.3 Вт сред, 33.30 макс | 1720 МГц | загрузка 89 %
+батарея: Not charging 100%, 0.0 Вт | профиль: balanced | RTD3: Enabled (fine-grained) | зазор: +2 мс | WMI: redmi-wmi
+ядро: 7.1.6-1-cachyos | boot_id: b59dd78e28324e638c36ee99c02c9af3
+cmdline: initrd=\initramfs-linux-cachyos.img root=UUID=c7f63d6d-d09b-4558-82ea-2900970dceb7 rw rootflags=subvol=/@ zswap.enabled=0 nowatchdog quiet splash
