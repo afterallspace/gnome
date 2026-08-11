@@ -1,7 +1,6 @@
 window-width  = 98
 window-height = 33
 
-# шрифт как в старом kitty-конфиге (~/W/config/kitty/kitty.conf)
 font-family = UbuntuMono Nerd Font Mono
 font-size   = 12
 

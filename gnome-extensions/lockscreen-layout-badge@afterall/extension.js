@@ -9,8 +9,8 @@ const LABELS = {
 
 export default class LockscreenLayoutBadge extends Extension {
   enable() {
-    // session-modes включает unlock-dialog, поэтому при блокировке
-    // экрана disable() не вызывается и подписи остаются нашими.
+    // session-modes lists unlock-dialog, so disable() is not called on lock
+    // and the badges survive onto the lock screen.
     this._ism = getInputSourceManager()
     this._original = new Map()
     this._sourceSignals = new Map()
@@ -25,7 +25,7 @@ export default class LockscreenLayoutBadge extends Extension {
     for (const i in this._ism.inputSources) {
       const source = this._ism.inputSources[i]
       this._apply(source)
-      // если чей-то disable() вернёт стандартную подпись — переустановим
+      // reapply if someone else's disable() restores the stock shortName
       const id = source.connect('changed', () => this._apply(source))
       this._sourceSignals.set(source, id)
     }
@@ -33,15 +33,14 @@ export default class LockscreenLayoutBadge extends Extension {
     this._pinWidth()
   }
 
-  // В момент переключения раскладки пересчёт ширины индикатора транзиентно
-  // гуляет на субпиксель и дёргает соседние иконки. CSS тут бессилен:
-  // и контейнер индикатора, и кнопка панели переопределяют vfunc расчёта
-  // ширины и не читают width из стиля. Поэтому фиксируем аллокацию всей
-  // кнопки на уровне Clutter — set_width() перекрывает любые vfunc.
+  // On layout switch the indicator's width recalc drifts by a subpixel and
+  // nudges neighbouring icons. CSS cannot fix it: both the indicator container
+  // and the panel button override the width vfunc and ignore styled width.
+  // Pinning the allocation in Clutter wins, since set_width() beats any vfunc.
   _pinWidth() {
     const button = Main.panel.statusArea.keyboard
     if (!button) return
-    button.set_width(-1) // сброс фиксации, чтобы замерить натуральную ширину
+    button.set_width(-1) // unpin first, to measure the natural width
     const [, natural] = button.get_preferred_width(-1)
     button.set_width(Math.ceil(natural))
   }
@@ -50,12 +49,12 @@ export default class LockscreenLayoutBadge extends Extension {
     const label = LABELS[source.id]
     if (!label || source.shortName === label) return
     if (!this._original.has(source.id)) this._original.set(source.id, source.shortName)
-    source.shortName = label // сеттер сам обновляет индикатор и OSD
+    source.shortName = label // the setter refreshes the indicator and OSD itself
   }
 
   disable() {
-    // Вызывается только при настоящем отключении расширения,
-    // не при блокировке экрана (см. session-modes).
+    // Only runs when the extension is genuinely disabled, not on screen lock
+    // (see session-modes).
     this._ism.disconnect(this._sourcesChangedId)
     for (const [source, id] of this._sourceSignals) source.disconnect(id)
     this._sourceSignals.clear()

@@ -13,12 +13,12 @@ const RUNDIR = GLib.get_user_runtime_dir()
 const PIDFILE = `${RUNDIR}/gsr-toggle.pid`
 const STARTFILE = `${RUNDIR}/gsr-toggle.start`
 
-// Ядро обрезает comm до 15 символов, поэтому сверяем с обрезанным именем.
+// The kernel truncates comm to 15 chars, so match against the truncated name.
 const COMM = 'gpu-screen-reco'
 
-// Оранжевый индикатор портала, который GNOME показывает во время захвата экрана.
-// Ищем его по классу из темы шелла, а не по приватному имени поля — так не
-// зависим от внутренностей конкретной версии GNOME.
+// GNOME's orange portal indicator, shown while the screen is being captured.
+// Matched by shell theme class rather than a private field name, to avoid
+// depending on the internals of a specific GNOME version.
 const NATIVE_CLASS = 'screen-sharing-indicator'
 
 function readText(path) {
@@ -30,7 +30,7 @@ function readText(path) {
   }
 }
 
-/** PID пишущего рекордера, либо null. Мёртвый и чужой pid отбрасываются. */
+/** PID of the recorder that is actually writing, or null. Dead and foreign pids are dropped. */
 function recordingPid() {
   const pid = readText(PIDFILE)
   if (!pid || !/^\d+$/.test(pid)) return null
@@ -38,14 +38,14 @@ function recordingPid() {
 }
 
 /**
- * Родной значок стопа живёт в ресурсах шелла, а не в системной теме иконок,
- * поэтому проверяем наличие и откатываемся на адвайтовский аналог.
+ * The native stop icon ships in shell resources rather than the system icon
+ * theme, so probe for it and fall back to the Adwaita equivalent.
  */
 function stopIconName() {
   try {
     if (new St.IconTheme().has_icon('screencast-stop-symbolic')) return 'screencast-stop-symbolic'
   } catch {
-    // St.IconTheme может отсутствовать — тогда просто берём запасной значок.
+    // St.IconTheme may be missing entirely — just take the fallback icon.
   }
   return 'media-playback-stop-symbolic'
 }
@@ -61,15 +61,15 @@ function formatElapsed(ms) {
 const RecordingIndicator = GObject.registerClass(
   class RecordingIndicator extends PanelMenu.Button {
     _init() {
-      // Третий аргумент — dontCreateMenu: меню не нужно, клик обрабатываем сами.
+      // Third argument is dontCreateMenu: no menu needed, clicks are ours.
       super._init(0.5, 'GSR Recording Indicator', true)
 
-      // Класс из темы шелла даёт ровно то же оформление, что у родного
-      // индикатора записи: красная пилюля, жирный белый текст, состояния
-      // hover/active, корректная светлая/тёмная/контрастная тема.
+      // The shell theme class gives exactly the native recording indicator's
+      // look: red pill, bold white text, hover/active states, and correct
+      // light/dark/high-contrast theming.
       this.add_style_class_name('screen-recording-indicator')
 
-      // Анимация масштабируется от центра, иначе пилюля «уезжает» углом.
+      // Scale the animation from the centre, or the pill drifts off by a corner.
       this.set_pivot_point(0.5, 0.5)
       this._shown = false
 
@@ -83,7 +83,7 @@ const RecordingIndicator = GObject.registerClass(
       this.add_child(box)
     }
 
-    // Любой клик останавливает запись — как у родного индикатора GNOME.
+    // Any click stops the recording, matching GNOME's native indicator.
     vfunc_event(event) {
       const type = event.type()
       if (type === Clutter.EventType.BUTTON_PRESS || type === Clutter.EventType.TOUCH_BEGIN) {
@@ -101,7 +101,7 @@ const RecordingIndicator = GObject.registerClass(
       this._label.text = text
     }
 
-    /** Плавное появление и исчезновение вместо резкой смены visible. */
+    /** Fade in and out instead of flipping visible outright. */
     setShown(shown) {
       if (shown === this._shown) return
       this._shown = shown
@@ -145,9 +145,9 @@ export default class GsrTimerExtension extends Extension {
     this._indicator.visible = false
     Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right')
 
-    // 250 мс, а не секунда: при секундном опросе показанное значение
-    // отставало от реального на случайную долю секунды, и на старте это
-    // выглядело как подвисший на пару секунд таймер.
+    // 250 ms rather than one second: polling once a second left the displayed
+    // value trailing the real one by a random fraction, which at startup read
+    // as a timer stuck for a couple of seconds.
     this._tick()
     this._timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
       this._tick()
@@ -172,9 +172,9 @@ export default class GsrTimerExtension extends Extension {
   }
 
   /**
-   * Прячет родной индикатор портала. Он создаётся лениво, уже после начала
-   * захвата, поэтому дерево панели переобходится на каждом тике, а на
-   * найденные актёры вешается notify::visible — иначе GNOME покажет их снова.
+   * Hides the native portal indicator. It is created lazily, after capture has
+   * already started, so the panel tree is rewalked on every tick and each actor
+   * found gets a notify::visible hook — otherwise GNOME shows it again.
    */
   _suppressNative() {
     const visit = (actor) => {
@@ -196,14 +196,14 @@ export default class GsrTimerExtension extends Extension {
   }
 
   _tick() {
-    // Обход дерева панели заметно дороже чтения пары мелких файлов,
-    // поэтому раз в секунду, а не на каждом тике.
+    // Walking the panel tree costs noticeably more than reading two small
+    // files, so do it once a second rather than on every tick.
     if (this._ticks++ % 4 === 0) this._suppressNative()
 
-    // Живого процесса мало: пока пользователь выбирает источник в диалоге
-    // портала, рекордер уже запущен, но захвата ещё нет. Отметку времени
-    // ставит скрипт по факту начала захвата, поэтому ждём именно её —
-    // иначе индикатор появлялся бы раньше записи и врал на старте.
+    // A live process is not enough: while the user picks a source in the portal
+    // dialog the recorder is already running but nothing is being captured. The
+    // script stamps the start file only once capture begins, so wait for that —
+    // otherwise the indicator would appear early and lie about elapsed time.
     const started = Number(readText(STARTFILE))
     const recording = recordingPid() !== null && Number.isFinite(started) && started > 0
 
