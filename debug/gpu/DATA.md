@@ -165,9 +165,14 @@ ERROR! JPAC is not created/already destroyed    ← ~250 раз за загру�
 
 ```
 ACPI: video: [Firmware Bug]: ACPI(PEGP) defines _DOD but not _DOS
-ucsi_acpi USBC000:00: bogus connector number in CCI: 2     ← пачками при втыкании зарядки
+ucsi_acpi USBC000:00: bogus connector number in CCI: 2     ← ~~пачками при втыкании зарядки~~
 acpi PNP0A08:00: _OSC: platform does not support [AER]
 ```
+
+> ⚠ Пометка «пачками при втыкании зарядки» — **промах, исправлено 13.08**.
+> Это не пачки: ровный поток 1 Гц, 27 005 строк за 14-часовой бут, переживает
+> s2idle. Разбор и рецепт — [SOLUTION.md → «UCSI: шторм в
+> журнале»](SOLUTION.md#ucsi-шторм-в-журнале-разобрано-1308).
 
 Два модуля ядра заявляют один WMI GUID (гонка при загрузке, на симптом не
 влияет — проверено):
