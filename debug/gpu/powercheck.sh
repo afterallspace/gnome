@@ -24,27 +24,46 @@ printf "  Адаптер подключён      : %s\n" "$([ "$ac" = 1 ] && ech
 
 echo
 echo "── USB-C Power Delivery ──────────────────────────────"
-pom=$(r $TYPEC/power_operation_mode)
-printf "  режим питания порта    : %s\n" "${pom:-—}"
-case "$pom" in
-  usb_power_delivery) echo "                           ✔ PD-контракт согласован" ;;
-  default)            [ "$ac" = 1 ] && echo "                           ⚠ ТОЛЬКО 5 В USB по умолчанию — PD НЕ согласован!" ;;
-esac
-printf "  ревизия PD             : %s\n" "$(r $TYPEC/usb_power_delivery_revision)"
-printf "  роль питания           : %s\n" "$(r $TYPEC/power_role)"
-if [ -n "$UCSI" ]; then
-  u_v=$(r $UCSI/voltage_now); u_i=$(r $UCSI/current_now)
-  u_vm=$(r $UCSI/voltage_max); u_im=$(r $UCSI/current_max)
-  printf "  источник: сейчас       : %s В, %s А" \
-    "$(awk -v x="${u_v:-0}" 'BEGIN{printf "%.1f", x/1e6}')" \
-    "$(awk -v x="${u_i:-0}" 'BEGIN{printf "%.2f", x/1e6}')"
-  awk -v v="${u_v:-0}" -v i="${u_i:-0}" 'BEGIN{ if(v>0&&i>0) printf "  →  %.1f Вт\n", v*i/1e12; else print "" }'
-  printf "  источник: максимум     : %s В, %s А" \
-    "$(awk -v x="${u_vm:-0}" 'BEGIN{printf "%.1f", x/1e6}')" \
-    "$(awk -v x="${u_im:-0}" 'BEGIN{printf "%.2f", x/1e6}')"
-  awk -v v="${u_vm:-0}" -v i="${u_im:-0}" 'BEGIN{ if(v>0&&i>0) printf "  →  %.0f Вт (номинал блока)\n", v*i/1e12; else print "" }'
-  [ "${u_vm:-0}" = 0 ] && [ "$ac" = 1 ] && \
-    echo "  ⚠ Прошивка не отдаёт параметры источника — номинал блока не прочитать."
+if [ ! -d "$TYPEC" ] && [ -z "$UCSI" ]; then
+  # 13.08: модуль ucsi_acpi занесён в blacklist намеренно. Это НЕ сбой замера —
+  # прошивка отдавала одни нули и сыпала ~2 строки/с в журнал ядра.
+  echo "  UCSI выгружен намеренно (blacklist ucsi_acpi) — полей PD нет."
+  echo "  Разбор, почему не потеря: SOLUTION.md → «UCSI: шторм в журнале»."
+else
+  pom=$(r $TYPEC/power_operation_mode)
+  bw=$(r $BAT/power_now)
+  printf "  режим питания порта    : %s\n" "${pom:-—}"
+  case "$pom" in
+    usb_power_delivery) echo "                           ✔ PD-контракт согласован" ;;
+    default)
+      if [ "$ac" = 1 ]; then
+        # 13.08: поле показало 'default' (≤15 Вт), пока батарея брала 22 Вт —
+        # прошивка врёт. Ругаемся на PD, только если расход это подтверждает.
+        if [ "${bw:-0}" -gt 15000000 ] 2>/dev/null; then
+          printf "                           ⚠ поле врёт: 'default' (≤15 Вт), а батарея берёт %s Вт\n" \
+            "$(awk -v x="$bw" 'BEGIN{printf "%.1f", x/1e6}')"
+        else
+          echo "                           ⚠ ТОЛЬКО 5 В USB по умолчанию — PD НЕ согласован!"
+        fi
+      fi
+      ;;
+  esac
+  printf "  ревизия PD             : %s\n" "$(r $TYPEC/usb_power_delivery_revision)"
+  printf "  роль питания           : %s\n" "$(r $TYPEC/power_role)"
+  if [ -n "$UCSI" ]; then
+    u_v=$(r $UCSI/voltage_now); u_i=$(r $UCSI/current_now)
+    u_vm=$(r $UCSI/voltage_max); u_im=$(r $UCSI/current_max)
+    printf "  источник: сейчас       : %s В, %s А" \
+      "$(awk -v x="${u_v:-0}" 'BEGIN{printf "%.1f", x/1e6}')" \
+      "$(awk -v x="${u_i:-0}" 'BEGIN{printf "%.2f", x/1e6}')"
+    awk -v v="${u_v:-0}" -v i="${u_i:-0}" 'BEGIN{ if(v>0&&i>0) printf "  →  %.1f Вт\n", v*i/1e12; else print "" }'
+    printf "  источник: максимум     : %s В, %s А" \
+      "$(awk -v x="${u_vm:-0}" 'BEGIN{printf "%.1f", x/1e6}')" \
+      "$(awk -v x="${u_im:-0}" 'BEGIN{printf "%.2f", x/1e6}')"
+    awk -v v="${u_vm:-0}" -v i="${u_im:-0}" 'BEGIN{ if(v>0&&i>0) printf "  →  %.0f Вт (номинал блока)\n", v*i/1e12; else print "" }'
+    [ "${u_vm:-0}" = 0 ] && [ "$ac" = 1 ] && \
+      echo "  ⚠ Прошивка не отдаёт параметры источника — номинал блока не прочитать."
+  fi
 fi
 
 echo
