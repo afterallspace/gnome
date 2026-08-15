@@ -9,9 +9,11 @@
 запускает `nvpcf-session-unlock.sh`: греет дискретку glmark'ом, меряет
 частоту SM под нагрузкой и, если она заперта на ~1327 МГц, до трёх раз
 прогоняет рецепт `NVST 3 → 20 с → NVST 1` через root-хелпер
-`/usr/local/bin/nvpcf-boot-fix.sh`. Итог — в `~/.config/debug/gpu/unlock.log`.
+`/usr/local/bin/nvpcf-boot-fix.sh`. Итог — только в журнале (файловое
+логирование снято 15.08.2026, ветка закрыта).
 
-**Проверка после загрузки:** `tail ~/.config/debug/gpu/unlock.log` — ищите
+**Проверка после загрузки:**
+`journalctl --user -u nvpcf-unlock.service -b 0` — ищите
 `OK: already unlocked` или `OK: unlocked (attempt N)`.
 Не запускать `bootcheck.sh` в первые ~2 минуты после входа (сервис работает).
 
@@ -68,8 +70,8 @@ sudo pacman -R acpi_call-dkms   # по желанию
 | `nvpcf-unlock.sh` | ручной запуск рецепта и EC-эксперименты |
 | `nvpcf-peek.sh` | чтение ACPI-переменных механизма (`--dsm`, `--kick`) |
 | `acpi/nvpcf-stnm.dsl/.aml` | runtime-SSDT с методом `\NVST` |
-| `bootcheck.sh` | вердикт загрузки + снимок журналов (25 с) |
-| `unlock.log`, `bootlog.csv`, `snapshots/` | телеметрия |
+| `bootcheck.sh` | вердикт загрузки (25 с), без записи — чистая диагностика |
+| `archive/` | закрытое наблюдение: `monitor.sh`, `summary.sh`, `compare-boots.sh` |
 | `archive/deadends/` | тупиковые инструменты (override-таблицы и пр.) — не использовать |
 | `BUGREPORT.md` | текст багрепорта для NVIDIA |
 

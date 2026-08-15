@@ -74,27 +74,18 @@ nvidia-powerd: Client (presumably SBIOS) has requested to disable Dynamic Boost 
 
 | Скрипт | Назначение |
 |---|---|
-| `./bootcheck.sh` | **главный**. Хорошая эта загрузка или плохая, ~25 с. Пишет в `bootlog.csv` и сохраняет снимок в `snapshots/` |
-| `./monitor.sh <метка>` | телеметрия 1 Гц во время игры, Ctrl+C для остановки |
-| `./summary.sh runs/<кат>` | разбор прогона `monitor.sh` |
-| `./compare-boots.sh` | дифф снимков хорошей и плохой загрузки |
+| `./bootcheck.sh` | **главный**. Хорошая эта загрузка или плохая, ~25 с. С 15.08 ничего не записывает — чистая диагностика |
 | `./powercheck.sh [сек]` | тракт питания: PD-контракт, износ батареи. С воткнутым адаптером |
 | `./precheck.sh` | память и VRAM перед игрой |
+| `archive/monitor.sh` и др. | инструменты закрытого наблюдения (телеметрия, дифф загрузок) |
 
-Зависимости: `sudo pacman -S --needed mangohud lib32-mangohud glmark2 stress-ng`
+Зависимости: `sudo pacman -S --needed mangohud lib32-mangohud glmark2`
 
 ### Как пользоваться
 
 ```fish
-# после каждой загрузки — 25 секунд, копит статистику
+# после обновления драйвера/BIOS — вердикт за 25 секунд
 cd ~/.config/debug/gpu && ./bootcheck.sh
-
-# если поймалась хорошая — НЕ ПЕРЕЗАГРУЖАТЬСЯ, сразу:
-./compare-boots.sh
-
-# полный замер в игре
-./monitor.sh inside     # играть 3-4 мин, Ctrl+C
-./summary.sh runs/inside_*
 ```
 
 Порог: **~16 Вт — плохо, 30+ — хорошо.** Между ними широкий зазор.
@@ -170,8 +161,8 @@ README.md            этот файл — статус и инструмент�
 INVESTIGATION.md     весь путь и все версии
 DATA.md              все замеры и конфигурация
 bootcheck.sh …       рабочие скрипты
-bootlog.csv          статистика загрузок (валидная, с 21.07 16:06)
-runs/                прогоны monitor.sh с реальными данными
-snapshots/           снимки состояния загрузок (журнал, параметры драйвера)
-archive/             невалидное и устаревшее — см. archive/README.md
+archive/             невалидное, устаревшее и закрытое наблюдение — см. archive/README.md
+
+Телеметрия (bootlog.csv, runs/, snapshots/, unlock.log) удалена 15.08 при
+закрытии ветки; итоговые цифры — в SOLUTION.md.
 ```

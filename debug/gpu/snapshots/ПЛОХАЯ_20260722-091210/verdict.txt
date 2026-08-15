@@ -1,4 +1,0 @@
-вердикт: ПЛОХАЯ | GPU 11.6 Вт сред, 11.69 макс | 495 МГц | загрузка 93 %
-батарея: Discharging 93%, 20.4 Вт | профиль: balanced | RTD3: Disabled | зазор: +336 мс | WMI: redmi-wmi
-ядро: 7.1.3-2-cachyos | boot_id: 84c9bf2cff184764b4da8dc7c364436e
-cmdline: initrd=\acpi-override.img initrd=\initramfs-linux-cachyos.img root=UUID=c7f63d6d-d09b-4558-82ea-2900970dceb7 rw rootflags=subvol=/@ zswap.enabled=0 nowatchdog quiet splash nvidia.NVreg_DynamicPowerManagement=0

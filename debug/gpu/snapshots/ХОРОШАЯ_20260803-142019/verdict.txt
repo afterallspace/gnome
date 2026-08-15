@@ -1,4 +1,0 @@
-вердикт: ХОРОШАЯ | GPU 31.5 Вт сред, 32.50 макс | 1731 МГц | загрузка 87 %
-батарея: Charging 11%, 32.4 Вт | профиль: balanced | RTD3: Enabled (fine-grained) | зазор: +322 мс | WMI: bitland-mifs-wmi
-ядро: 7.1.5-1-cachyos | boot_id: 0d669edcf2304eb1be45db433433dc33
-cmdline: initrd=\initramfs-linux-cachyos.img root=UUID=c7f63d6d-d09b-4558-82ea-2900970dceb7 rw rootflags=subvol=/@ zswap.enabled=0 nowatchdog quiet splash

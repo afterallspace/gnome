@@ -109,36 +109,6 @@ printf "    RTD3                  : %s\n" "${rtd3:-?}"
 printf "    зазор nvidia→i915     : %s мс\n" "$gap"
 printf "    WMI 46C93E13          : %s\n" "${wmidrv:-—}"
 
-boot=$(journalctl --list-boots --no-pager 2>/dev/null | tail -1 | awk '{print $2}')
-[ -f bootlog.csv ] || echo "дата,вердикт,gpu_вт_сред,gpu_вт_макс,мгц,загрузка,батарея,rtd3,зазор_мс,wmi,ядро,boot_id,бат_вт,профиль" > bootlog.csv
-echo "$(date -Is),$verdict,$avg,$max,$cavg,$uavg,\"$bat\",${rtd3:-?},$gap,${wmidrv:-?},$(uname -r),$boot,${batw:-?},${profile:-?}" >> bootlog.csv
-
-# --- СНИМОК ЖУРНАЛА ---
-# Журнал этой машины вычищается за считанные часы: лог хорошей загрузки
-# 12:57 (34.9 Вт) был безвозвратно потерян через три часа. Поэтому сохраняем
-# всё нужное сразу, отдельно от journald.
-SNAP="snapshots/${verdict}_$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$SNAP"
-{
-  echo "вердикт: $verdict | GPU $avg Вт сред, $max макс | $cavg МГц | загрузка $uavg %"
-  echo "батарея: $bat, ${batw:-?} Вт | профиль: ${profile:-?} | RTD3: ${rtd3:-?} | зазор: $gap мс | WMI: ${wmidrv:-?}"
-  echo "ядро: $(uname -r) | boot_id: $boot"
-  echo "cmdline: $(cat /proc/cmdline)"
-} > "$SNAP/verdict.txt"
-journalctl -k -b 0 --no-pager -o short-monotonic > "$SNAP/kernel.log" 2>/dev/null
-journalctl -u nvidia-powerd -b 0 --no-pager > "$SNAP/nvidia-powerd.log" 2>/dev/null
-cp /proc/driver/nvidia/params "$SNAP/nvidia-params.txt" 2>/dev/null
-cp /proc/driver/nvidia/gpus/0000:01:00.0/power "$SNAP/nvidia-power.txt" 2>/dev/null
-nvidia-smi -q > "$SNAP/nvidia-smi-q.txt" 2>/dev/null
-grep -E '^(MODULES|HOOKS)=' /etc/mkinitcpio.conf > "$SNAP/mkinitcpio.txt" 2>/dev/null
-ls /etc/modprobe.d/ > "$SNAP/modprobe.d.txt" 2>/dev/null
-gzip -q "$SNAP/kernel.log" "$SNAP/nvidia-smi-q.txt" 2>/dev/null
-
-echo
-echo "Записано в bootlog.csv (проверок: $(($(wc -l < bootlog.csv) - 1)))"
-echo "Снимок журнала: $SNAP"
-[ "$verdict" = "ХОРОШАЯ" ] && {
-  echo
-  echo "  ⚠ ЭТО ХОРОШАЯ ЗАГРУЗКА — снимок сохранён, НЕ ПЕРЕЗАГРУЖАЙСЯ."
-  echo "    Сравни её с плохой:  ./compare-boots.sh"
-}
+# Расследование закрыто 15.08.2026: bootlog.csv и снимки журнала больше не
+# ведутся, скрипт остался чисто диагностическим (проверка после обновлений
+# драйвера/BIOS). Итоговая статистика — в SOLUTION.md.
